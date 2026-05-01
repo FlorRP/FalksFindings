@@ -16,13 +16,25 @@ export default function AdminProductList({ products, onRefresh }: Props) {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const updateStatus = async (id: string, newStatus: Product['status']) => {
+    const updatePayload: any = { status: newStatus };
+
+    // Add sold_at timestamp when marking as sold
+    if (newStatus === 'sold') {
+      updatePayload.sold_at = new Date().toISOString();
+    } else if (newStatus === 'available') {
+      // Clear sold_at when marking back to available
+      updatePayload.sold_at = null;
+    }
+
     const { error } = await supabase
       .from('products')
-      .update({ status: newStatus })
+      .update(updatePayload)
       .eq('id', id);
 
     if (!error) {
       onRefresh();
+    } else {
+      console.error('Error updating status:', error);
     }
   };
 
@@ -68,6 +80,7 @@ export default function AdminProductList({ products, onRefresh }: Props) {
                   <button
                     onClick={() => updateStatus(product.id, 'available')}
                     className="btn-primary text-xs px-3 py-1.5"
+                    type="button"
                   >
                     <CheckCircle size={12} />{at.markAvailable}
                   </button>
@@ -76,6 +89,7 @@ export default function AdminProductList({ products, onRefresh }: Props) {
                   <button
                     onClick={() => updateStatus(product.id, 'reserved')}
                     className="btn-gold text-xs px-3 py-1.5"
+                    type="button"
                   >
                     {at.markReserved}
                   </button>
@@ -83,8 +97,16 @@ export default function AdminProductList({ products, onRefresh }: Props) {
                 {product.status !== 'sold' && (
                   <button
                     onClick={() => updateStatus(product.id, 'sold')}
-                    className="btn-outline text-xs px-3 py-1.5"
-                    style={{ borderColor: '#8B4513', color: '#8B4513' }}
+                    className="text-xs px-3 py-1.5 rounded font-semibold transition-all"
+                    style={{
+                      background: '#8B4513',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(1)'}
+                    type="button"
                   >
                     {at.markSold}
                   </button>
@@ -92,12 +114,14 @@ export default function AdminProductList({ products, onRefresh }: Props) {
                 <button
                   onClick={() => setEditingProduct(product)}
                   className="btn-outline text-xs px-3 py-1.5"
+                  type="button"
                 >
                   <Pencil size={12} />{at.edit}
                 </button>
                 <button
                   onClick={() => setConfirmDelete(product.id)}
                   className="btn-danger"
+                  type="button"
                 >
                   <Trash2 size={12} />
                 </button>

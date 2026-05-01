@@ -16,6 +16,7 @@ export type Product = {
   image_url: string;
   status: 'available' | 'reserved' | 'sold';
   created_at: string;
+  sold_at: string | null;
 };
 
 export type Reservation = {

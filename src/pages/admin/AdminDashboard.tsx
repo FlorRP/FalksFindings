@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { LogOut, Plus, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { LogOut, Plus, Loader2, LogOut as LogOutIcon } from 'lucide-react';
 import { supabase, Product } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLang } from '../../contexts/LanguageContext';
@@ -10,13 +11,21 @@ import AdminReservations from './AdminReservations';
 type Tab = 'products' | 'reservations' | 'add';
 
 export default function AdminDashboard() {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { t } = useLang();
+  const navigate = useNavigate();
   const at = t.admin;
   const [tab, setTab] = useState<Tab>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/admin/login', { replace: true });
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     loadProducts();
@@ -44,7 +53,9 @@ export default function AdminDashboard() {
   }
 
   const handleLogout = async () => {
+    setShowLogoutConfirm(false);
     await signOut();
+    navigate('/admin/login', { replace: true });
   };
 
   return (
@@ -52,7 +63,18 @@ export default function AdminDashboard() {
       <header className="bg-header sticky top-0 z-20 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <h1 className="text-header font-bold text-2xl">{at.dashboard.title}</h1>
-          <button onClick={handleLogout} className="btn-outline text-accent border-accent">
+          <button
+            onClick={() => setShowLogoutConfirm(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded font-semibold text-sm transition-all"
+            style={{
+              background: '#8B4513',
+              color: '#FFFFFF',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(1)'}
+          >
             <LogOut size={16} />
             {at.dashboard.logout}
           </button>
@@ -103,6 +125,39 @@ export default function AdminDashboard() {
           </>
         )}
       </main>
+
+      {showLogoutConfirm && (
+        <div className="modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
+          <div className="modal-box p-7 max-w-sm text-center" onClick={e => e.stopPropagation()}>
+            <LogOut size={44} className="mx-auto mb-4" style={{ color: '#8B4513' }} />
+            <h3 className="text-title font-bold text-lg mb-2">Log Out?</h3>
+            <p className="text-body text-sm opacity-80 mb-6">
+              Are you sure you want to log out? Your session will be ended.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={handleLogout}
+                className="px-6 py-2 rounded font-semibold text-sm text-white transition-all"
+                style={{
+                  background: '#8B4513',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(1)'}
+              >
+                Log Out
+              </button>
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="btn-outline px-6 py-2"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
