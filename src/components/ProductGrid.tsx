@@ -21,8 +21,7 @@ export default function ProductGrid() {
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'products',
-        filter: 'status=neq.sold'
+        table: 'products'
       }, (payload) => {
         if (payload.eventType === 'DELETE') {
           setProducts(prev => prev.filter(p => p.id !== payload.old.id));
@@ -36,6 +35,22 @@ export default function ProductGrid() {
       channel.unsubscribe();
     };
   }, []);
+
+  // Helper to check if a sold product should be shown (sold today only)
+  const isSoldToday = (soldAt: string | null): boolean => {
+    if (!soldAt) return false;
+    const estNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    const estToday = new Date(estNow.getFullYear(), estNow.getMonth(), estNow.getDate());
+    const soldDate = new Date(new Date(soldAt).toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    const soldDay = new Date(soldDate.getFullYear(), soldDate.getMonth(), soldDate.getDate());
+    return estToday.getTime() === soldDay.getTime();
+  };
+
+  // Filter products: show available/reserved + sold items from today
+  const visibleProducts = products.filter(p => {
+    if (p.status !== 'sold') return true;
+    return isSoldToday(p.sold_at);
+  });
 
   async function loadProducts() {
     const { data } = await supabase
@@ -64,18 +79,18 @@ export default function ProductGrid() {
           <div className="flex justify-center py-20">
             <Loader2 size={40} className="text-accent animate-spin" />
           </div>
-        ) : products.length === 0 ? (
+        ) : visibleProducts.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-body opacity-60 text-lg">{t.products.empty}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map(product => (
+            {visibleProducts.map(product => (
               <ProductCard
                 key={product.id}
                 product={product}
                 onReserve={p => setReservingProduct(p)}
-                onViewDetails={p => setSelectedProduct(p)}
+                onViewDetails={p => product.status !== 'sold' ? setSelectedProduct(p) : null}
               />
             ))}
           </div>

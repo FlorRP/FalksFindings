@@ -70,9 +70,16 @@ export default function AdminProductList({ products, onRefresh }: Props) {
               <div className="flex-1 min-w-0">
                 <p className="text-title font-bold text-sm truncate">{name}</p>
                 <p className="text-price font-bold text-sm">${product.price.toFixed(2)}</p>
-                <span className={`status-badge ${statusClass} inline-block mt-1`}>
-                  {at[`mark${product.status.charAt(0).toUpperCase() + product.status.slice(1)}` as 'markAvailable' | 'markReserved' | 'markSold']}
-                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`status-badge ${statusClass} inline-block`}>
+                    {at[`mark${product.status.charAt(0).toUpperCase() + product.status.slice(1)}` as 'markAvailable' | 'markReserved' | 'markSold']}
+                  </span>
+                  {product.sold_at && (
+                    <span className="text-body text-xs opacity-60">
+                      {new Date(product.sold_at).toLocaleDateString()} {new Date(product.sold_at).toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-2 flex-shrink-0">

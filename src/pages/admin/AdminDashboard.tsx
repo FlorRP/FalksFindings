@@ -7,8 +7,9 @@ import { useLang } from '../../contexts/LanguageContext';
 import ProductForm from './ProductForm';
 import AdminProductList from './AdminProductList';
 import AdminReservations from './AdminReservations';
+import AdminSoldItems from './AdminSoldItems';
 
-type Tab = 'products' | 'reservations' | 'add';
+type Tab = 'products' | 'reservations' | 'sold' | 'add';
 
 export default function AdminDashboard() {
   const { signOut, user } = useAuth();
@@ -82,10 +83,11 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div className="flex gap-2 mb-8 border-b border-card pb-4">
+        <div className="flex gap-2 mb-8 border-b border-card pb-4 flex-wrap">
           {[
             { key: 'products' as const, label: at.dashboard.tabs.products },
             { key: 'reservations' as const, label: at.dashboard.tabs.reservations },
+            { key: 'sold' as const, label: 'Sold Items' },
             { key: 'add' as const, label: at.dashboard.tabs.addProduct },
           ].map(({ key, label }) => (
             <button
@@ -96,6 +98,7 @@ export default function AdminDashboard() {
                   ? 'bg-btn text-btn'
                   : 'text-body hover:bg-card'
               }`}
+              type="button"
             >
               {key === 'add' ? <Plus size={16} className="inline mr-1" /> : null}
               {label}
@@ -111,13 +114,15 @@ export default function AdminDashboard() {
           <AdminProductList products={products} onRefresh={loadProducts} />
         ) : tab === 'reservations' ? (
           <AdminReservations />
+        ) : tab === 'sold' ? (
+          <AdminSoldItems />
         ) : (
           <>
             {showForm ? (
               <ProductForm onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); loadProducts(); }} />
             ) : (
               <div className="text-center py-16">
-                <button onClick={() => setShowForm(true)} className="btn-primary px-8 py-3">
+                <button onClick={() => setShowForm(true)} className="btn-primary px-8 py-3" type="button">
                   <Plus size={18} /> {at.dashboard.tabs.addProduct}
                 </button>
               </div>
