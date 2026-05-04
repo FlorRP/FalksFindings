@@ -62,7 +62,7 @@ export default function ProductGrid() {
   async function loadProducts() {
     const { data } = await supabase
       .from('products')
-      .select('*')
+      .select(`*, product_images(id, product_id, image_url, display_order, created_at)`)
       .neq('status', 'sold')
       .order('created_at', { ascending: false });
     setProducts(data ?? []);

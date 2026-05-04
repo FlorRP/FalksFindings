@@ -5,6 +5,14 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+export type ProductImage = {
+  id: string;
+  product_id: string;
+  image_url: string;
+  display_order: number;
+  created_at: string;
+};
+
 export type Product = {
   id: string;
   name_en: string;
@@ -17,6 +25,7 @@ export type Product = {
   status: 'available' | 'reserved' | 'sold';
   created_at: string;
   sold_at: string | null;
+  product_images?: ProductImage[];
 };
 
 export type Reservation = {

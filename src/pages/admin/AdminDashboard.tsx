@@ -48,7 +48,7 @@ export default function AdminDashboard() {
   }, []);
 
   async function loadProducts() {
-    const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    const { data } = await supabase.from('products').select(`*, product_images(id, product_id, image_url, display_order, created_at)`).order('created_at', { ascending: false });
     setProducts(data ?? []);
     setLoading(false);
   }
