@@ -5,6 +5,16 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Add the new ProductImage type definition
+
+export type ProductImage = {
+    id: string;
+    product_id: string;
+    image_url: string;
+    display_order: number;
+    created_at: string;
+};
+
 export type Product = {
   id: string;
   name_en: string;
