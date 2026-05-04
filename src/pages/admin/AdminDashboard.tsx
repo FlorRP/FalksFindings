@@ -111,7 +111,7 @@ export default function AdminDashboard() {
             <Loader2 size={36} className="text-accent animate-spin" />
           </div>
         ) : tab === 'products' ? (
-          <AdminProductList products={products} onRefresh={loadProducts} />
+          <AdminProductList products={products.filter(p => p.status !== 'sold')} onRefresh={loadProducts} />
         ) : tab === 'reservations' ? (
           <AdminReservations />
         ) : tab === 'sold' ? (

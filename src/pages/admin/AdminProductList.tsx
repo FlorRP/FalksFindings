@@ -15,6 +15,9 @@ export default function AdminProductList({ products, onRefresh }: Props) {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
+  // Filter to exclude sold products - only show available and reserved
+  const activeProducts = products.filter(p => p.status !== 'sold');
+
   const updateStatus = async (id: string, newStatus: Product['status']) => {
     const updatePayload: any = { status: newStatus };
 
@@ -44,7 +47,7 @@ export default function AdminProductList({ products, onRefresh }: Props) {
     onRefresh();
   };
 
-  if (products.length === 0) {
+  if (activeProducts.length === 0) {
     return (
       <div className="text-center py-16 text-body opacity-50">{t.products.empty}</div>
     );
@@ -53,7 +56,7 @@ export default function AdminProductList({ products, onRefresh }: Props) {
   return (
     <>
       <div className="flex flex-col gap-4">
-        {products.map(product => {
+        {activeProducts.map(product => {
           const name = product.name_en;
           const statusClass =
             product.status === 'available' ? 'status-available' :

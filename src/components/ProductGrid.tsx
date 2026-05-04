@@ -36,20 +36,27 @@ export default function ProductGrid() {
     };
   }, []);
 
-  // Helper to check if a sold product should be shown (sold today only)
-  const isSoldToday = (soldAt: string | null): boolean => {
+  // Helper to check if a sold product should be shown (sold today in EST)
+  const shouldShowSoldProduct = (soldAt: string | null): boolean => {
     if (!soldAt) return false;
+
+    // Get current time in EST
     const estNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
-    const estToday = new Date(estNow.getFullYear(), estNow.getMonth(), estNow.getDate());
-    const soldDate = new Date(new Date(soldAt).toLocaleString('en-US', { timeZone: 'America/New_York' }));
-    const soldDay = new Date(soldDate.getFullYear(), soldDate.getMonth(), soldDate.getDate());
-    return estToday.getTime() === soldDay.getTime();
+    const estTodayStart = new Date(estNow.getFullYear(), estNow.getMonth(), estNow.getDate(), 0, 0, 0, 0);
+    const estTodayEnd = new Date(estNow.getFullYear(), estNow.getMonth(), estNow.getDate(), 23, 59, 59, 999);
+
+    // Get sold date in EST
+    const soldDateTime = new Date(soldAt);
+    const soldDateEST = new Date(soldDateTime.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+
+    // Show if sold date is between today's start and end in EST
+    return soldDateEST >= estTodayStart && soldDateEST <= estTodayEnd;
   };
 
-  // Filter products: show available/reserved + sold items from today
+  // Filter products: show available/reserved + sold items from today (EST)
   const visibleProducts = products.filter(p => {
     if (p.status !== 'sold') return true;
-    return isSoldToday(p.sold_at);
+    return shouldShowSoldProduct(p.sold_at);
   });
 
   async function loadProducts() {
