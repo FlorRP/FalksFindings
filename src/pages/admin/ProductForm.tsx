@@ -94,58 +94,64 @@ export default function ProductForm({ product, onClose, onSaved }: Props) {
     setError('');
     setSaving(true);
 
-    const allImages = [...images, ...newImageFiles.map((f, i) => ({
-      id: `new-${i}`,
-      product_id: product?.id ?? '',
-      image_url: URL.createObjectURL(f),
-      display_order: 0,
-      created_at: new Date().toISOString(),
-      isNew: true,
-    }))];
+    try {
+      const allImages = [...images, ...newImageFiles.map((f, i) => ({
+        id: `new-${i}`,
+        product_id: product?.id ?? '',
+        image_url: URL.createObjectURL(f),
+        display_order: 0,
+        created_at: new Date().toISOString(),
+        isNew: true,
+      }))];
 
-    if (allImages.length === 0) {
-      setError('At least one image is required');
-      setSaving(false);
-      return;
-    }
-
-    let productId = product?.id;
-
-    // Upload new images
-    if (newImageFiles.length > 0) {
-      setUploading(true);
-      const uploadedUrls: string[] = [];
-
-      for (const file of newImageFiles) {
-        const ext = file.name.split('.').pop();
-        const path = `${Date.now()}-${Math.random()}.${ext}`;
-        const { error: uploadError } = await supabase.storage
-          .from('product-images')
-          .upload(path, file);
-
-        if (uploadError) {
-          setError(at.errorUpload);
-          setUploading(false);
-          setSaving(false);
-          return;
-        }
-
-        const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
-        uploadedUrls.push(urlData.publicUrl);
+      if (allImages.length === 0) {
+        setError('At least one image is required');
+        setSaving(false);
+        return;
       }
 
-      // Create or update product
+      let productId = product?.id;
+      const uploadedUrls: string[] = [];
+
+      // Upload new images if any
+      if (newImageFiles.length > 0) {
+        setUploading(true);
+
+        for (const file of newImageFiles) {
+          const ext = file.name.split('.').pop();
+          const path = `${Date.now()}-${Math.random()}.${ext}`;
+          const { error: uploadError } = await supabase.storage
+            .from('product-images')
+            .upload(path, file);
+
+          if (uploadError) {
+            setError(at.errorUpload);
+            setUploading(false);
+            setSaving(false);
+            return;
+          }
+
+          const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
+          uploadedUrls.push(urlData.publicUrl);
+        }
+
+        setUploading(false);
+      }
+
+      // Prepare product payload
       const payload = {
         name_en: form.name_en.trim(),
         name_es: form.name_es.trim(),
         description_en: form.description_en.trim(),
         description_es: form.description_es.trim(),
-        price: parseFloat(form.price) || 0,
+        price: Number(form.price) || 0,
         condition: form.condition,
-        image_url: uploadedUrls[0],
+        image_url: uploadedUrls.length > 0 ? uploadedUrls[0] : product?.image_url,
       };
 
+      // Create or update product
       if (!productId) {
+        // New product
         const { data: newProduct, error: createError } = await supabase
           .from('products')
           .insert({ ...payload, status: 'available' })
@@ -153,68 +159,79 @@ export default function ProductForm({ product, onClose, onSaved }: Props) {
           .maybeSingle();
 
         if (createError || !newProduct) {
+          console.error('Create error:', createError);
           setError(at.errorSave);
-          setUploading(false);
           setSaving(false);
           return;
         }
 
         productId = newProduct.id;
       } else {
-        const { error: updateError } = await supabase
+        // Update existing product
+        const { data: updateData, error: updateError } = await supabase
           .from('products')
           .update(payload)
-          .eq('id', productId);
+          .eq('id', productId)
+          .select();
+
+        console.log('Update response:', updateData, updateError);
 
         if (updateError) {
+          console.error('Update failed:', updateError);
           setError(at.errorSave);
-          setUploading(false);
+          setSaving(false);
+          return;
+        }
+
+        if (!updateData || updateData.length === 0) {
+          console.error('Update returned no data');
+          setError(at.errorSave);
+          setSaving(false);
+          return;
+        }
+
+        console.log('Update successful');
+      }
+
+      // Handle images - only update if there are images to manage
+      if (product?.id && (newImageFiles.length > 0 || images.length !== (product.product_images?.length ?? 0))) {
+        // Delete existing images and add all images
+        await supabase.from('product_images').delete().eq('product_id', productId);
+
+        // Insert all images with correct order
+        const imagesToInsert = [
+          ...images,
+          ...uploadedUrls.map((url, i) => ({
+            image_url: url,
+            product_id: productId,
+            display_order: images.length + i,
+          })),
+        ].map((img, i) => ({
+          image_url: 'image_url' in img ? img.image_url : img,
+          product_id: productId,
+          display_order: i,
+        }));
+
+        const { error: insertError } = await supabase
+          .from('product_images')
+          .insert(imagesToInsert);
+
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          setError('Error saving images');
           setSaving(false);
           return;
         }
       }
 
-      // Delete existing images and add new ones
-      if (product?.id) {
-        await supabase.from('product_images').delete().eq('product_id', product.id);
-      }
-
-      // Insert all images with correct order
-      const imagesToInsert = [
-        ...images,
-        ...uploadedUrls.map((url, i) => ({
-          image_url: url,
-          product_id: productId,
-          display_order: images.length + i,
-        })),
-      ].map((img, i) => ({
-        image_url: 'image_url' in img ? img.image_url : img,
-        product_id: productId,
-        display_order: i,
-      }));
-
-      const { error: insertError } = await supabase
-        .from('product_images')
-        .insert(imagesToInsert);
-
-      if (insertError) {
-        setError('Error saving images');
-        setUploading(false);
-        setSaving(false);
-        return;
-      }
-
-      setUploading(false);
-    } else if (!product?.id) {
-      // New product without images - needs at least one
-      setError('At least one image is required');
+      setSuccess(product ? at.successEdit : at.successAdd);
       setSaving(false);
-      return;
+      setTimeout(() => { onSaved(); onClose(); }, 800);
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setError('Unexpected error occurred');
+      setSaving(false);
     }
-
-    setSuccess(product ? at.successEdit : at.successAdd);
-    setSaving(false);
-    setTimeout(() => { onSaved(); onClose(); }, 800);
   };
 
   const displayImages = [...images, ...newImageFiles.map((f, i) => ({
