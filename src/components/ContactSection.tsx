@@ -6,7 +6,7 @@ import emailjs from '@emailjs/browser';
 type FormState = { name: string; phone: string; message: string };
 
 export default function ContactSection() {
-  const { t } = useLang();
+  const { lang, t } = useLang();
   const [form, setForm] = useState<FormState>({ name: '', phone: '', message: '' });
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -19,19 +19,19 @@ export default function ContactSection() {
     try {
       const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
       const templateId = import.meta.env.VITE_EMAILJS_CONTACT_TEMPLATE_ID;
-      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
-      if (serviceId && templateId && publicKey) {
+      if (serviceId && templateId) {
         await emailjs.send(serviceId, templateId, {
-          from_name: form.name,
-          phone: form.phone,
-          message: form.message,
-        }, publicKey);
+          sender_name: form.name,
+          sender_phone: form.phone,
+          sender_message: form.message,
+        });
       }
 
       setStatus('success');
       setForm({ name: '', phone: '', message: '' });
-    } catch {
+    } catch (err) {
+      console.error('Email sending failed:', err);
       setStatus('error');
     } finally {
       setSending(false);
@@ -55,7 +55,8 @@ export default function ContactSection() {
           {status === 'success' ? (
             <div className="text-center py-8">
               <CheckCircle size={44} className="text-accent mx-auto mb-3" />
-              <p className="text-title font-semibold text-lg">{t.contact.success}</p>
+              <p className="text-title font-semibold text-lg">{lang === 'es' ? '¡Mensaje enviado exitosamente!' : 'Message sent successfully!'}</p>
+              <p className="text-body text-sm mt-2 opacity-75">{lang === 'es' ? 'Pronto nos contactaremos con usted.' : 'We will get back to you soon.'}</p>
               <button
                 onClick={() => setStatus('idle')}
                 className="btn-primary mt-6 px-8"

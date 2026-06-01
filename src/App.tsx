@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import emailjs from '@emailjs/browser';
 import { useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -13,6 +14,10 @@ function App() {
   const { user, loading } = useAuth();
   const [activeSection, setActiveSection] = useState<Section>('home');
   const [scrollTo, setScrollTo] = useState<Section | null>(null);
+
+  useEffect(() => {
+    emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
+  }, []);
 
   const handleNavigate = (section: Section) => {
     setActiveSection(section);

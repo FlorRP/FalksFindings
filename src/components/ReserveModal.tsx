@@ -49,6 +49,7 @@ export default function ReserveModal({ product, onClose, onReserved }: Props) {
     setSubmitting(true);
 
     try {
+      // Save to Supabase first (always succeeds regardless of email)
       const { error: dbError } = await supabase.from('reservations').insert({
         product_id: product.id,
         customer_name: form.name.trim(),
@@ -56,26 +57,53 @@ export default function ReserveModal({ product, onClose, onReserved }: Props) {
         whatsapp: form.whatsapp,
         message: form.message.trim(),
       });
-      if (dbError) throw dbError;
 
-      await supabase.from('products').update({ status: 'reserved' }).eq('id', product.id);
+      if (dbError) {
+        console.error('Database error:', dbError);
+        throw dbError;
+      }
 
+      // Update product status to reserved
+      const { error: statusError } = await supabase
+        .from('products')
+        .update({ status: 'reserved' })
+        .eq('id', product.id);
+
+      if (statusError) {
+        console.error('Status update error:', statusError);
+      }
+
+      // Send email - failures don't block the flow
       const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
       const templateId = import.meta.env.VITE_EMAILJS_RESERVATION_TEMPLATE_ID;
-      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
-      if (serviceId && templateId && publicKey) {
-        await emailjs.send(serviceId, templateId, {
-          product_name: productName,
-          customer_name: form.name,
-          phone: form.phone,
-          whatsapp: form.whatsapp ? 'Yes' : 'No',
-          message: form.message || '—',
-        }, publicKey);
+
+      if (serviceId && templateId) {
+        try {
+          const reservationDate = new Date().toLocaleString('en-US', {
+            timeZone: 'America/New_York',
+            dateStyle: 'full',
+            timeStyle: 'short',
+          });
+
+          await emailjs.send(serviceId, templateId, {
+            product_name: productName,
+            product_price: product.price,
+            customer_name: form.name,
+            customer_phone: form.phone,
+            uses_whatsapp: form.whatsapp ? 'Yes' : 'No',
+            customer_message: form.message || 'No message provided',
+            reservation_date: reservationDate,
+          });
+        } catch (emailError) {
+          // Log error but don't block - reservation already saved
+          console.error('Email sending failed:', emailError);
+        }
       }
 
       onReserved(product.id);
       setStatus('success');
-    } catch {
+    } catch (err) {
+      console.error('Reservation error:', err);
       setStatus('error');
     } finally {
       setSubmitting(false);
@@ -87,7 +115,8 @@ export default function ReserveModal({ product, onClose, onReserved }: Props) {
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-box p-8 text-center" onClick={e => e.stopPropagation()}>
           <CheckCircle size={52} className="text-accent mx-auto mb-4" />
-          <h3 className="text-title text-xl font-bold mb-2">{t.reserve.success}</h3>
+          <h3 className="text-title text-xl font-bold mb-3">{lang === 'es' ? '¡Tu reserva fue recibida!' : 'Your reservation was received!'}</h3>
+          <p className="text-body text-sm mb-6">{lang === 'es' ? 'Pronto nos pondremos en contacto al número proporcionado.' : 'We will contact you soon at the phone number provided.'}</p>
           <button onClick={onClose} className="btn-primary mt-6 px-8">{t.modal.close}</button>
         </div>
       </div>
