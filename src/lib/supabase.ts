@@ -32,8 +32,8 @@ export type Reservation = {
   id: string;
   product_id: string;
   customer_name: string;
-  phone: string;
-  whatsapp: boolean;
+  phone_number: string;
+  uses_whatsapp: boolean;
   message: string;
   created_at: string;
   products?: Product;

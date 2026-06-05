@@ -81,11 +81,11 @@ export default function AdminReservations() {
                   </div>
                   <div>
                     <span className="text-body text-xs opacity-60 uppercase tracking-wider font-semibold">{at.phone}</span>
-                    <p className="text-body text-sm">{r.phone}</p>
+                    <p className="text-body text-sm">{r.phone_number}</p>
                   </div>
                   <div>
                     <span className="text-body text-xs opacity-60 uppercase tracking-wider font-semibold">{at.whatsapp}</span>
-                    <p className="text-body text-sm">{r.whatsapp ? at.yes : at.no}</p>
+                    <p className="text-body text-sm">{r.uses_whatsapp ? at.yes : at.no}</p>
                   </div>
                   <div>
                     <span className="text-body text-xs opacity-60 uppercase tracking-wider font-semibold">{at.product}</span>

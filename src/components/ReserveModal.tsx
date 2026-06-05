@@ -53,8 +53,8 @@ export default function ReserveModal({ product, onClose, onReserved }: Props) {
       const { error: dbError } = await supabase.from('reservations').insert({
         product_id: product.id,
         customer_name: form.name.trim(),
-        phone: form.phone.trim(),
-        whatsapp: form.whatsapp,
+        phone_number: form.phone.trim(),
+        uses_whatsapp: form.whatsapp,
         message: form.message.trim(),
       });
 
