@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase, Reservation } from '../../lib/supabase';
+import { supabase, Reservation, formatPhoneDisplay } from '../../lib/supabase';
 import { useLang } from '../../contexts/LanguageContext';
 import { CheckCircle, Loader2 } from 'lucide-react';
 
@@ -81,7 +81,7 @@ export default function AdminReservations() {
                   </div>
                   <div>
                     <span className="text-body text-xs opacity-60 uppercase tracking-wider font-semibold">{at.phone}</span>
-                    <p className="text-body text-sm">{r.phone_number}</p>
+                    <p className="text-body text-sm">{formatPhoneDisplay(r.phone_number)}</p>
                   </div>
                   <div>
                     <span className="text-body text-xs opacity-60 uppercase tracking-wider font-semibold">{at.whatsapp}</span>

@@ -1,19 +1,35 @@
 import { useState } from 'react';
 import { Send, CheckCircle, AlertCircle, Mail } from 'lucide-react';
 import { useLang } from '../contexts/LanguageContext';
+import { validatePhone } from '../lib/supabase';
 import emailjs from '@emailjs/browser';
 
 type FormState = { name: string; phone: string; message: string };
+
+function formatPhoneInput(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+  if (digits.length === 0) return '';
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 3)})${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)})${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
 
 export default function ContactSection() {
   const { lang, t } = useLang();
   const [form, setForm] = useState<FormState>({ name: '', phone: '', message: '' });
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.phone.trim() || !form.message.trim()) return;
+    setPhoneError(null);
+
+    if (!form.name.trim() || !form.message.trim()) return;
+    if (!validatePhone(form.phone)) {
+      setPhoneError(lang === 'es' ? 'Ingrese un número de teléfono válido de 10 dígitos' : 'Enter a valid 10-digit phone number');
+      return;
+    }
     setSending(true);
 
     try {
@@ -84,10 +100,15 @@ export default function ContactSection() {
                   type="tel"
                   required
                   className="form-input"
-                  placeholder={t.contact.phonePlaceholder}
+                  placeholder="(xxx)xxx-xxxx"
                   value={form.phone}
-                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                  onChange={e => setForm(f => ({ ...f, phone: formatPhoneInput(e.target.value) }))}
                 />
+                {phoneError && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle size={12} />{phoneError}
+                  </p>
+                )}
               </div>
 
               <div>

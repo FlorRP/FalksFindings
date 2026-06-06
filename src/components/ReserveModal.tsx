@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, CheckCircle, AlertCircle } from 'lucide-react';
-import { supabase, Product } from '../lib/supabase';
+import { supabase, Product, validatePhone } from '../lib/supabase';
 import { useLang } from '../contexts/LanguageContext';
 import emailjs from '@emailjs/browser';
 
@@ -16,6 +16,14 @@ type FormState = {
   whatsapp: boolean;
   message: string;
 };
+
+function formatPhoneInput(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+  if (digits.length === 0) return '';
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 3)})${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)})${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
 
 export default function ReserveModal({ product, onClose, onReserved }: Props) {
   const { lang, t } = useLang();
@@ -37,7 +45,7 @@ export default function ReserveModal({ product, onClose, onReserved }: Props) {
   const validate = () => {
     const e: Partial<Record<keyof FormState, string>> = {};
     if (!form.name.trim()) e.name = t.reserve.validationName;
-    if (!form.phone.trim()) e.phone = t.reserve.validationPhone;
+    if (!validatePhone(form.phone)) e.phone = lang === 'es' ? 'Ingrese un número de teléfono válido de 10 dígitos' : 'Enter a valid 10-digit phone number';
     return e;
   };
 
@@ -168,9 +176,9 @@ export default function ReserveModal({ product, onClose, onReserved }: Props) {
             <input
               type="tel"
               className="form-input"
-              placeholder={t.reserve.phonePlaceholder}
+              placeholder="(xxx)xxx-xxxx"
               value={form.phone}
-              onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+              onChange={e => setForm(f => ({ ...f, phone: formatPhoneInput(e.target.value) }))}
             />
             {errors.phone && (
               <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
