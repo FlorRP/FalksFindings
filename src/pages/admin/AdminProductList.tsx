@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { Pencil, Trash2, CheckCircle } from 'lucide-react';
 import { supabase, Product } from '../../lib/supabase';
-import { useLang } from '../../contexts/LanguageContext';
+import { translations } from '../../lib/translations';
 import ProductForm from './ProductForm';
+
+const t = translations.en;
+const at = t.admin.product;
 
 type Props = {
   products: Product[];
@@ -10,8 +13,6 @@ type Props = {
 };
 
 export default function AdminProductList({ products, onRefresh }: Props) {
-  const { t } = useLang();
-  const at = t.admin.product;
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
@@ -49,7 +50,7 @@ export default function AdminProductList({ products, onRefresh }: Props) {
 
   if (activeProducts.length === 0) {
     return (
-      <div className="text-center py-16 text-body opacity-50">{t.products.empty}</div>
+      <div className="text-center py-16 text-body opacity-50">No products available.</div>
     );
   }
 

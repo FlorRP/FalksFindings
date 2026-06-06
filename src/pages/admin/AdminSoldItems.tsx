@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { supabase, Product } from '../../lib/supabase';
-import { useLang } from '../../contexts/LanguageContext';
+import { translations } from '../../lib/translations';
 import { CheckCircle, Loader2, Trash2 } from 'lucide-react';
 
+const t = translations.en;
+
 export default function AdminSoldItems() {
-  const { lang, t } = useLang();
-  const at = t.admin.product;
   const [soldProducts, setSoldProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -73,7 +73,7 @@ export default function AdminSoldItems() {
     <>
       <div className="flex flex-col gap-4">
         {soldProducts.map(product => {
-          const name = lang === 'es' ? product.name_es || product.name_en : product.name_en;
+          const name = product.name_en;
           const soldDate = product.sold_at ? new Date(product.sold_at) : null;
 
           return (

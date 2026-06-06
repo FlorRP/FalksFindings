@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Search, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useLang } from '../../contexts/LanguageContext';
+import { translations } from '../../lib/translations';
+
+const t = translations.en;
 
 export default function AdminLogin() {
   const { signIn } = useAuth();
-  const { t } = useLang();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

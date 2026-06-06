@@ -1,7 +1,10 @@
 import { useState, useRef } from 'react';
 import { X, Upload, Loader2, CheckCircle, Trash2, GripVertical } from 'lucide-react';
 import { supabase, Product, ProductImage } from '../../lib/supabase';
-import { useLang } from '../../contexts/LanguageContext';
+import { translations } from '../../lib/translations';
+
+const t = translations.en;
+const at = t.admin.product;
 
 type Props = {
   product?: Product;
@@ -12,8 +15,6 @@ type Props = {
 type ImageWithPreview = ProductImage & { isNew?: boolean };
 
 export default function ProductForm({ product, onClose, onSaved }: Props) {
-  const { t } = useLang();
-  const at = t.admin.product;
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({

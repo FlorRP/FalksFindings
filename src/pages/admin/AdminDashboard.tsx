@@ -3,19 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Plus, Loader2, LogOut as LogOutIcon } from 'lucide-react';
 import { supabase, Product } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { useLang } from '../../contexts/LanguageContext';
+import { translations } from '../../lib/translations';
 import ProductForm from './ProductForm';
 import AdminProductList from './AdminProductList';
 import AdminReservations from './AdminReservations';
 import AdminSoldItems from './AdminSoldItems';
 
+const t = translations.en;
+const at = t.admin;
+
 type Tab = 'products' | 'reservations' | 'sold' | 'add';
 
 export default function AdminDashboard() {
   const { signOut, user } = useAuth();
-  const { t } = useLang();
   const navigate = useNavigate();
-  const at = t.admin;
   const [tab, setTab] = useState<Tab>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);

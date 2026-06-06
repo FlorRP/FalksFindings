@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { supabase, Reservation, formatPhoneDisplay } from '../../lib/supabase';
-import { useLang } from '../../contexts/LanguageContext';
+import { translations } from '../../lib/translations';
 import { CheckCircle, Loader2, Trash2, DollarSign } from 'lucide-react';
 
+const t = translations.en;
+const at = t.admin.reservations;
+
 export default function AdminReservations() {
-  const { lang, t } = useLang();
-  const at = t.admin.reservations;
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -55,7 +56,7 @@ export default function AdminReservations() {
   };
 
   const deleteReservation = async (reservation: Reservation) => {
-    if (!confirm(lang === 'es' ? '¿Eliminar esta reserva?' : 'Delete this reservation?')) return;
+    if (!confirm('Delete this reservation?')) return;
     setActionLoading(reservation.id);
     await supabase.from('products').update({ status: 'available' }).eq('id', reservation.product_id);
     await supabase.from('reservations').delete().eq('id', reservation.id);
@@ -79,9 +80,7 @@ export default function AdminReservations() {
     <div className="flex flex-col gap-4">
       {reservations.map(r => {
         const product = r.products;
-        const productName = product
-          ? (lang === 'es' ? product.name_es || product.name_en : product.name_en)
-          : '—';
+        const productName = product ? product.name_en : '—';
 
         return (
           <div key={r.id} className="product-card p-5">
