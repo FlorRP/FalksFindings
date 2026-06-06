@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { supabase, Reservation, formatPhoneDisplay } from '../../lib/supabase';
 import { useLang } from '../../contexts/LanguageContext';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, Loader2, Trash2, DollarSign } from 'lucide-react';
 
 export default function AdminReservations() {
   const { lang, t } = useLang();
   const at = t.admin.reservations;
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     loadReservations();
@@ -38,8 +39,28 @@ export default function AdminReservations() {
   }
 
   const markAvailable = async (reservation: Reservation) => {
+    setActionLoading(reservation.id);
     await supabase.from('products').update({ status: 'available' }).eq('id', reservation.product_id);
+    await supabase.from('reservations').delete().eq('id', reservation.id);
     await loadReservations();
+    setActionLoading(null);
+  };
+
+  const markSold = async (reservation: Reservation) => {
+    setActionLoading(reservation.id);
+    await supabase.from('products').update({ status: 'sold', sold_at: new Date().toISOString() }).eq('id', reservation.product_id);
+    await supabase.from('reservations').delete().eq('id', reservation.id);
+    await loadReservations();
+    setActionLoading(null);
+  };
+
+  const deleteReservation = async (reservation: Reservation) => {
+    if (!confirm(lang === 'es' ? '¿Eliminar esta reserva?' : 'Delete this reservation?')) return;
+    setActionLoading(reservation.id);
+    await supabase.from('products').update({ status: 'available' }).eq('id', reservation.product_id);
+    await supabase.from('reservations').delete().eq('id', reservation.id);
+    await loadReservations();
+    setActionLoading(null);
   };
 
   if (loading) {
@@ -104,12 +125,29 @@ export default function AdminReservations() {
                   <span className="text-body text-xs opacity-50">
                     {at.date}: {new Date(r.created_at).toLocaleString()}
                   </span>
-                  <button
-                    onClick={() => markAvailable(r)}
-                    className="btn-primary text-xs px-3 py-1.5"
-                  >
-                    <CheckCircle size={12} />{at.markAvailable}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => markAvailable(r)}
+                      disabled={actionLoading === r.id}
+                      className="btn-primary text-xs px-3 py-1.5"
+                    >
+                      <CheckCircle size={12} />{at.markAvailable}
+                    </button>
+                    <button
+                      onClick={() => markSold(r)}
+                      disabled={actionLoading === r.id}
+                      className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                    >
+                      <DollarSign size={12} />{at.markSold}
+                    </button>
+                    <button
+                      onClick={() => deleteReservation(r)}
+                      disabled={actionLoading === r.id}
+                      className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 size={12} />{at.delete}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
