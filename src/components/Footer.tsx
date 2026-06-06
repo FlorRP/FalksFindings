@@ -1,4 +1,4 @@
-import { Search, Instagram, Facebook, Twitter } from 'lucide-react';
+import { Search, Facebook } from 'lucide-react';
 import { useLang } from '../contexts/LanguageContext';
 
 export default function Footer() {
@@ -38,14 +38,8 @@ export default function Footer() {
                 {t.footer.followUs}
               </p>
               <div className="flex gap-3">
-                <a href="#" className="text-[rgba(245,240,232,0.7)] hover:text-accent transition-colors" aria-label="Instagram">
-                  <Instagram size={22} />
-                </a>
                 <a href="#" className="text-[rgba(245,240,232,0.7)] hover:text-accent transition-colors" aria-label="Facebook">
                   <Facebook size={22} />
-                </a>
-                <a href="#" className="text-[rgba(245,240,232,0.7)] hover:text-accent transition-colors" aria-label="Twitter">
-                  <Twitter size={22} />
                 </a>
               </div>
             </div>
